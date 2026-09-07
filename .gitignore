@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Claude Code local session state
 .claude/
+
+# fichiers uploadés localement (module Documents) — stockage disque en dev
+/public/uploads/*
+!/public/uploads/.gitkeep
