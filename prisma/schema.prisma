@@ -1,0 +1,939 @@
+// ============================================================================
+// MyTug — Schéma de base de données
+// Dérivé du carnet de décisions (MYTUG_CODEX_HANDOFF_METIER_ARCHITECTURE.md
+// + toutes les décisions du Product Owner, module par module)
+// Architecture mono-compagnie : une base de données sert une seule compagnie.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// SOCIÉTÉ / CONFIGURATION
+// ============================================================================
+
+model Company {
+  id       String  @id @default(cuid())
+  name     String
+  address  String?
+  homePort String?
+  timezone String  @default("Europe/Paris")
+
+  // Réglages généraux (module Paramètres) — un seul enregistrement par compagnie
+  serviceCycleWorkDays Int    @default(3) // ex: 3 jours travail
+  serviceCycleRestDays Int    @default(6) // ex: 6 jours repos
+  reliefTimeOfDay      String @default("06:00") // heure fixe de relève, format HH:mm
+
+  fuelAlertThresholdPct  Int @default(20)
+  maintenanceHoursAlert1 Int @default(50)
+  maintenanceHoursAlert2 Int @default(10)
+  maintenanceDaysAlert1  Int @default(30)
+  maintenanceDaysAlert2  Int @default(7)
+  maintenanceDaysAlert3  Int @default(1)
+  certificateDaysAlert1  Int @default(60)
+  certificateDaysAlert2  Int @default(30)
+  certificateDaysAlert3  Int @default(7)
+
+  emailNotificationsEnabled Boolean @default(true)
+  pushNotificationsEnabled  Boolean @default(true)
+  smsNotificationsEnabled   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                     User[]
+  tugs                      Tug[]
+  postes                    Poste[]
+  pilots                    Pilot[]
+  movementTypes             MovementType[]
+  certificateTypes          CertificateType[]
+  exerciseTypes             ExerciseType[]
+  maintenanceEquipmentTypes MaintenanceEquipmentType[]
+  tugTypes                  TugType[]
+  documentTypes             DocumentType[]
+  documents                 Document[]
+  configChangeLogs          ConfigChangeLog[]
+}
+
+/// Journal léger des changements de configuration (module Historique) —
+/// seul point sans traçabilité déjà couverte par un mécanisme dédié ailleurs.
+model ConfigChangeLog {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  parameter String // ex: "fuelAlertThresholdPct"
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+}
+
+// ============================================================================
+// RÉFÉRENTIELS (configurables — gestion Administrateur, ou Administrateur +
+// Chef d'armement selon la décision "Paramètres")
+// Un item utilisé historiquement n'est jamais supprimé, seulement archivé.
+// ============================================================================
+
+model Poste {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String // Capitaine, Chef mécanicien, Graisseur, Matelot 1, Matelot 2, Autres
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  assignments PostAssignment[]
+
+  @@unique([companyId, name])
+}
+
+model Pilot {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  missions Mission[]
+}
+
+/// Accostage, Appareillage, Sécurité mauvais temps, Assistance, Déhalage,
+/// Changement de poste, Autre (avec champ libre si "Autre").
+model MovementType {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  missions Mission[]
+}
+
+model CertificateType {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  certificates Certificate[]
+}
+
+model ExerciseType {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String // ex: Homme à la mer, Incendie, Abandon, Sécurité ISPS
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  programEntries ExerciseProgramEntry[]
+}
+
+/// Équipements de maintenance hors moteurs (treuil, pompe incendie...).
+model MaintenanceEquipmentType {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  maintenancePlans MaintenancePlan[]
+}
+
+/// ASD, Conventionnel, extensible.
+model TugType {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  tugs                Tug[]
+  requestedByMissions Mission[] @relation("RequestedTugType")
+}
+
+model DocumentType {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  name       String // PDF, Photo, Procédure, ...
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  documents Document[]
+}
+
+// ============================================================================
+// UTILISATEURS ET RÔLES
+// ============================================================================
+
+enum UserRole {
+  ADMINISTRATEUR
+  CHEF_ARMEMENT
+  CHEF_MECANICIEN
+  CAPITAINE
+  DISPATCHER
+  // NB: le rôle "Mécanicien" du handoff a été supprimé — écart validé par le PO,
+  // il n'existe pas de mécanicien à bord dans la réalité de cette compagnie.
+}
+
+enum UserStatus {
+  ACTIF
+  ARCHIVE
+}
+
+model User {
+  id        String     @id @default(cuid())
+  companyId String
+  company   Company    @relation(fields: [companyId], references: [id])
+  firstName String
+  lastName  String
+  role      UserRole
+  status    UserStatus @default(ACTIF)
+
+  // Authentification mixte selon le rôle :
+  // - CAPITAINE / CHEF_MECANICIEN -> PIN sur tablette partagée du remorqueur
+  // - ADMINISTRATEUR / CHEF_ARMEMENT / DISPATCHER -> email + mot de passe
+  email        String? @unique
+  passwordHash String?
+  pinHash      String? // haché, jamais stocké en clair
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Historique des affectations (flexible, pas de rattachement fixe)
+  postAssignments PostAssignment[]
+
+  // Prise de service (capitaine ou chef mécanicien)
+  servicePickups ServicePickup[]
+
+  // Déclarations de relève faites par cet utilisateur
+  handoverDeclarations HandoverDeclaration[]
+  // Contestations faites par cet utilisateur
+  contestations        Contestation[]
+
+  // Missions créées (capitaine)
+  missionsCreated Mission[] @relation("MissionCreator")
+
+  // Remplacements déclarés par cet utilisateur (capitaine ou chef d'armement)
+  replacementsDeclared PostAssignment[] @relation("ReplacementDeclaredBy")
+
+  // Changements de statut remorqueur effectués par cet utilisateur
+  tugStatusChanges TugStatusHistory[]
+
+  // Journal machine (chef mécanicien uniquement)
+  machineLogEntries MachineLogEntry[]
+
+  // Maintenance
+  maintenancePlansResponsible         MaintenancePlan[]         @relation("MaintenancePlanResponsible")
+  maintenanceInterventionsResponsible MaintenanceIntervention[] @relation("InterventionResponsible")
+
+  // Carburant / huile
+  fluidEvents FluidEvent[]
+
+  // Sécurité (observations créées par le capitaine)
+  safetyObservations SafetyObservation[] @relation("SafetyAuthor")
+  safetyValidations  SafetyObservation[] @relation("SafetyValidatedBy")
+
+  // Exercices : programme suivi par ce capitaine + exécutions saisies
+  exerciseProgramEntries ExerciseProgramEntry[] @relation("ExerciseCaptain")
+  exerciseExecutions     ExerciseExecution[]
+
+  // Documents
+  documentsAuthored     Document[]
+  documentVersionsAdded DocumentVersion[]
+
+  // Notifications reçues
+  notifications Notification[]
+
+  configChangeLogs ConfigChangeLog[]
+
+  @@index([companyId, role])
+}
+
+// ============================================================================
+// REMORQUEURS (FLOTTE)
+// ============================================================================
+
+enum TugOperationalStatus {
+  DISPONIBLE
+  OCCUPE // piloté automatiquement par les missions — jamais manuel
+  MAINTENANCE
+  DESARME
+  ACTIVE_TEMPORAIREMENT
+  INDISPONIBLE
+}
+
+model Tug {
+  id           String  @id @default(cuid())
+  companyId    String
+  company      Company @relation(fields: [companyId], references: [id])
+  name         String
+  internalCode String?
+  tugTypeId    String
+  tugType      TugType @relation(fields: [tugTypeId], references: [id])
+
+  status     TugOperationalStatus @default(DISPONIBLE)
+  isArchived Boolean              @default(false)
+
+  // Identification
+  imo       String?
+  callSign  String?
+  flag      String?
+  yearBuilt Int?
+  shipyard  String?
+
+  // Dimensions / capacités
+  lengthM       Float?
+  widthM        Float?
+  draftM        Float?
+  tonnageGT     Float?
+  displacementT Float?
+  bollardPullT  Float?
+  speedKnots    Float?
+
+  // Propulsion (résumé libre — le détail précis vit dans Engine[])
+  propulsionType String?
+
+  // Capacités de fluides
+  fuelCapacityT  Float?
+  oilCapacityL   Float?
+  waterCapacityL Float?
+
+  // Équipements
+  fireFightingEquipment String?
+  towingEquipment       String?
+  winch                 String?
+
+  extraSpecs Json? // caractéristiques additionnelles libres — fiche extensible
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  engines                  Engine[]
+  statusHistory            TugStatusHistory[]
+  postAssignments          PostAssignment[]
+  services                 Service[]
+  missions                 Mission[]
+  fluidEvents              FluidEvent[]
+  machineLogEntries        MachineLogEntry[]
+  maintenancePlans         MaintenancePlan[]
+  maintenanceInterventions MaintenanceIntervention[]
+  certificates             Certificate[]
+  exerciseProgramEntries   ExerciseProgramEntry[]
+  safetyObservations       SafetyObservation[]
+  documents                Document[]
+}
+
+/// Moteurs (principaux/auxiliaires) — heures suivies individuellement.
+enum EngineKind {
+  PRINCIPAL
+  AUXILIAIRE
+}
+
+model Engine {
+  id           String     @id @default(cuid())
+  tugId        String
+  tug          Tug        @relation(fields: [tugId], references: [id])
+  kind         EngineKind
+  label        String // "Moteur principal 1", "Auxiliaire 2"...
+  manufacturer String?
+  model        String?
+  powerKw      Float?
+  currentHours Float      @default(0) // compteur courant, mis à jour à chaque relevé
+
+  createdAt DateTime @default(now())
+
+  hourReadings     EngineHourReading[]
+  maintenancePlans MaintenancePlan[]
+}
+
+/// Historique horodaté de chaque transition de statut (qui/quand/motif).
+/// L'activation temporaire d'un remorqueur désarmé exige une période +
+/// équipage affecté (capturé via startsAt/endsAt + note).
+model TugStatusHistory {
+  id                       String               @id @default(cuid())
+  tugId                    String
+  tug                      Tug                  @relation(fields: [tugId], references: [id])
+  status                   TugOperationalStatus
+  changedById              String
+  changedBy                User                 @relation(fields: [changedById], references: [id])
+  reason                   String?
+  temporaryActivationStart DateTime?
+  temporaryActivationEnd   DateTime?
+  createdAt                DateTime             @default(now())
+}
+
+// ============================================================================
+// ÉQUIPAGES — modèle unifié affectation / remplacement
+// Pas d'entité "Équipe" nommée : structure fluide, chaque poste est occupé
+// par la personne actuellement affectée pour un Service donné.
+// ============================================================================
+
+/// Une "assignation de poste" couvre une période sur un poste, pour un
+/// service donné. Un remplacement = clôture anticipée d'une assignation +
+/// création d'une nouvelle assignation pour le même poste/service.
+model PostAssignment {
+  id        String  @id @default(cuid())
+  tugId     String
+  tug       Tug     @relation(fields: [tugId], references: [id])
+  posteId   String
+  poste     Poste   @relation(fields: [posteId], references: [id])
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  startsAt DateTime
+  endsAt   DateTime?
+  reason   String? // motif du remplacement, facultatif
+
+  // Déclarant : le capitaine du service concerné, ou le chef d'armement
+  declaredById String
+  declaredBy   User   @relation("ReplacementDeclaredBy", fields: [declaredById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([tugId, serviceId, posteId])
+}
+
+// ============================================================================
+// PRISE DE SERVICE
+// ============================================================================
+
+model Service {
+  id    String @id @default(cuid())
+  tugId String
+  tug   Tug    @relation(fields: [tugId], references: [id])
+
+  plannedStart DateTime // dérivée de l'heure de relève + cycle configurés
+  actualStart  DateTime?
+  plannedEnd   DateTime?
+  actualEnd    DateTime?
+
+  createdAt DateTime @default(now())
+
+  postAssignments      PostAssignment[]
+  servicePickups       ServicePickup[]
+  handoverDeclarations HandoverDeclaration[]
+  missions             Mission[]
+}
+
+enum ServicePickupRole {
+  CAPITAINE
+  CHEF_MECANICIEN
+}
+
+enum ServicePickupStatus {
+  A_TEMPS
+  EN_RETARD
+  NON_EFFECTUEE
+}
+
+/// Protocole formel réservé au Capitaine et au Chef mécanicien : délai d'1h
+/// démarrant à l'heure de relève prévue, notification au chef d'armement si
+/// dépassé. Processus indépendants entre les deux rôles.
+model ServicePickup {
+  id        String            @id @default(cuid())
+  serviceId String
+  service   Service           @relation(fields: [serviceId], references: [id])
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  role      ServicePickupRole
+
+  deadlineAt      DateTime // heure de relève prévue + 1h
+  pickedUpAt      DateTime?
+  status          ServicePickupStatus @default(A_TEMPS)
+  notifiedChiefAt DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+enum HandoverKind {
+  CAPITAINE
+  CHEF_MECANICIEN
+}
+
+/// Déclaration de relève — version Chef mécanicien (carburant, huile, heures
+/// moteur par moteur, remarques) et version Capitaine (remarques/consignes
+/// libres, symétrique, ajoutée à la demande du PO).
+model HandoverDeclaration {
+  id        String       @id @default(cuid())
+  serviceId String
+  service   Service      @relation(fields: [serviceId], references: [id])
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  kind      HandoverKind
+
+  // Champs Chef mécanicien
+  fuelRemainingT     Float?
+  oilRemainingL      Float?
+  engineHourReadings Json? // [{engineId, hours}], reflété aussi dans EngineHourReading
+  technicalState     String?
+
+  // Champ Capitaine (et remarques générales pour le chef mécanicien aussi)
+  remarks String?
+
+  isValidated Boolean  @default(true) // immuable une fois créée ; correction via Contestation
+  createdAt   DateTime @default(now())
+
+  contestations Contestation[]
+}
+
+/// Mécanisme de contestation générique, partagé entre Prise de service et
+/// Sécurité. Élément contesté en texte libre (pas seulement des champs
+/// prédéfinis). Résolution par accord mutuel (Prise de service) ou par le
+/// chef d'armement (validation Sécurité selon le contexte).
+enum ContestationStatus {
+  OUVERTE
+  RESOLUE
+}
+
+model Contestation {
+  id                    String               @id @default(cuid())
+  handoverDeclarationId String?
+  handoverDeclaration   HandoverDeclaration? @relation(fields: [handoverDeclarationId], references: [id])
+  safetyObservationId   String?
+  safetyObservation     SafetyObservation?   @relation(fields: [safetyObservationId], references: [id])
+
+  authorId      String
+  author        User               @relation(fields: [authorId], references: [id])
+  contestedItem String // libre : "Carburant restant", "Moteur principal 1", etc.
+  reason        String
+  status        ContestationStatus @default(OUVERTE)
+
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+}
+
+// ============================================================================
+// MISSIONS
+// ============================================================================
+
+enum MissionStatus {
+  EN_COURS
+  TERMINEE
+  ANNULEE
+}
+
+/// Une mission = un remorqueur. Les remorqueurs participant à la même
+/// opération sont reliés par operationGroupId (rejoint, jamais "sélectionné"
+/// depuis une liste de participants). 4 horodatages : départ du quai (= début
+/// de mission), début/fin du mouvement, retour au quai (= fin de mission,
+/// seul horodatage qui libère le remorqueur).
+model Mission {
+  id        String  @id @default(cuid())
+  tugId     String
+  tug       Tug     @relation(fields: [tugId], references: [id])
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  operationGroupId String? // identifiant d'opération commun, optionnel
+
+  pilotId                 String
+  pilot                   Pilot        @relation(fields: [pilotId], references: [id])
+  vesselName              String // texte libre, pas de répertoire pour l'instant
+  movementTypeId          String
+  movementType            MovementType @relation(fields: [movementTypeId], references: [id])
+  movementTypeOtherDetail String? // si "Autre"
+  position                String?
+
+  departureFromDockAt DateTime // = début de mission
+  movementStartAt     DateTime?
+  movementEndAt       DateTime?
+  returnToDockAt      DateTime? // = fin de mission, seul horodatage qui libère le remorqueur
+
+  requestedTugTypeId String?
+  requestedTugType   TugType? @relation("RequestedTugType", fields: [requestedTugTypeId], references: [id])
+
+  externalAssistanceRequested Boolean @default(false)
+  externalAssistanceCompany   String?
+  externalAssistanceReason    String?
+
+  status      MissionStatus @default(EN_COURS)
+  createdById String
+  createdBy   User          @relation("MissionCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tugId, status])
+  @@index([operationGroupId])
+}
+
+// ============================================================================
+// JOURNAL MACHINE / HEURES MOTEUR / CARBURANT / HUILE
+// ============================================================================
+
+/// Relevé d'heures moteur — source unique : la déclaration de relève du chef
+/// mécanicien, une fois par service (pas par mission).
+model EngineHourReading {
+  id         String   @id @default(cuid())
+  engineId   String
+  engine     Engine   @relation(fields: [engineId], references: [id])
+  hours      Float
+  recordedAt DateTime @default(now())
+
+  @@index([engineId, recordedAt])
+}
+
+enum MachineState {
+  NORMAL
+  A_SURVEILLER
+  PANNE
+}
+
+/// Réservé au Chef mécanicien. Un incident déclenche une proposition
+/// (non bloquante) de créer une Maintenance corrective pré-remplie.
+model MachineLogEntry {
+  id               String       @id @default(cuid())
+  tugId            String
+  tug              Tug          @relation(fields: [tugId], references: [id])
+  userId           String
+  user             User         @relation(fields: [userId], references: [id])
+  state            MachineState
+  observation      String
+  isIncident       Boolean      @default(false)
+  correctiveAction String?
+  remarks          String?
+
+  linkedMaintenanceInterventionId String?
+  linkedMaintenanceIntervention   MaintenanceIntervention? @relation(fields: [linkedMaintenanceInterventionId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum FluidType {
+  CARBURANT
+  HUILE
+}
+
+enum FluidEventType {
+  AVITAILLEMENT // quantité ajoutée
+  NIVEAU_DECLARE // déclaration de niveau (via relève)
+}
+
+model FluidEvent {
+  id         String         @id @default(cuid())
+  tugId      String
+  tug        Tug            @relation(fields: [tugId], references: [id])
+  userId     String
+  user       User           @relation(fields: [userId], references: [id])
+  fluidType  FluidType
+  eventType  FluidEventType
+  quantity   Float // quantité ajoutée (avitaillement) ou niveau (déclaration)
+  recordedAt DateTime       @default(now())
+}
+
+// ============================================================================
+// MAINTENANCE PRÉVENTIVE ET CORRECTIVE
+// ============================================================================
+
+enum MaintenanceIntervalType {
+  HEURES
+  CALENDAIRE
+  LES_DEUX
+}
+
+enum MaintenanceCalendarUnit {
+  JOURS
+  MOIS
+  ANNEES
+}
+
+/// Équipement = lien direct vers un moteur (plans basés heures) OU référence
+/// à un équipement du référentiel (autres équipements). Responsable :
+/// toujours le Chef mécanicien.
+model MaintenancePlan {
+  id    String @id @default(cuid())
+  tugId String
+  tug   Tug    @relation(fields: [tugId], references: [id])
+
+  engineId          String?
+  engine            Engine?                   @relation(fields: [engineId], references: [id])
+  equipmentTypeId   String?
+  equipmentType     MaintenanceEquipmentType? @relation(fields: [equipmentTypeId], references: [id])
+  equipmentFreeText String? // saisie libre complémentaire
+
+  intervalType          MaintenanceIntervalType
+  intervalHours         Float?
+  intervalCalendarValue Int?
+  intervalCalendarUnit  MaintenanceCalendarUnit?
+
+  lastDoneAt    DateTime?
+  lastDoneHours Float?
+  nextDueAt     DateTime?
+  nextDueHours  Float?
+
+  responsibleId String
+  responsible   User    @relation("MaintenancePlanResponsible", fields: [responsibleId], references: [id])
+  instructions  String?
+  status        String  @default("actif")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interventions MaintenanceIntervention[]
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+}
+
+/// Intervenant = champ texte libre (technicien interne ou atelier externe),
+/// pas une référence à un rôle interne (le rôle Mécanicien a été supprimé).
+model MaintenanceIntervention {
+  id     String           @id @default(cuid())
+  tugId  String
+  tug    Tug              @relation(fields: [tugId], references: [id])
+  planId String?
+  plan   MaintenancePlan? @relation(fields: [planId], references: [id])
+
+  type                      MaintenanceType
+  occurredAt                DateTime
+  engineHoursAtIntervention Float?
+  description               String?
+  performedBy               String? // texte libre : technicien / atelier externe
+
+  responsibleId String
+  responsible   User   @relation("InterventionResponsible", fields: [responsibleId], references: [id])
+  status        String @default("terminée")
+
+  partsUsed String?
+  remarks   String?
+
+  createdAt DateTime @default(now())
+
+  tasks             MaintenanceTask[]
+  machineLogEntries MachineLogEntry[]
+  documents         Document[]
+}
+
+model MaintenanceTask {
+  id             String                  @id @default(cuid())
+  interventionId String
+  intervention   MaintenanceIntervention @relation(fields: [interventionId], references: [id])
+  description    String
+  order          Int
+  isRequired     Boolean                 @default(false)
+  isDone         Boolean                 @default(false)
+  doneAt         DateTime?
+  remarks        String?
+}
+
+// ============================================================================
+// CERTIFICATS
+// ============================================================================
+
+model Certificate {
+  id              String          @id @default(cuid())
+  tugId           String
+  tug             Tug             @relation(fields: [tugId], references: [id])
+  typeId          String
+  type            CertificateType @relation(fields: [typeId], references: [id])
+  referenceNumber String?
+  issuedAt        DateTime?
+  expiresAt       DateTime?
+  authority       String?
+  remarks         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents Document[]
+}
+
+// ============================================================================
+// PLANNING ANNUEL DES EXERCICES — suivi PAR REMORQUEUR ET PAR CAPITAINE
+// (chaque capitaine effectue le programme complet, indépendamment des autres)
+// ============================================================================
+
+enum ExerciseEntryStatus {
+  PREVU
+  A_VENIR
+  REALISE
+  EN_RETARD
+  ANNULE
+}
+
+model ExerciseProgramEntry {
+  id        String       @id @default(cuid())
+  year      Int
+  tugId     String
+  tug       Tug          @relation(fields: [tugId], references: [id])
+  typeId    String
+  type      ExerciseType @relation(fields: [typeId], references: [id])
+  captainId String // point d'ancrage "équipe" — pas d'entité Équipe nommée
+  captain   User         @relation("ExerciseCaptain", fields: [captainId], references: [id])
+
+  plannedAt            DateTime?
+  frequency            String?
+  requiredParticipants String?
+  status               ExerciseEntryStatus @default(PREVU)
+  remarks              String?
+  referenceDocumentId  String?
+
+  createdAt DateTime @default(now())
+
+  execution ExerciseExecution?
+
+  @@index([tugId, captainId, year])
+}
+
+/// Saisi par le capitaine, directement officiel — pas de validation formelle
+/// du chef d'armement pour les exercices (différent de Sécurité/ISM/ISPS).
+model ExerciseExecution {
+  id             String               @id @default(cuid())
+  programEntryId String               @unique
+  programEntry   ExerciseProgramEntry @relation(fields: [programEntryId], references: [id])
+  executedById   String
+  executedBy     User                 @relation(fields: [executedById], references: [id])
+
+  actualDate        DateTime
+  participants      String?
+  result            String?
+  observations      String?
+  correctiveActions String?
+
+  createdAt DateTime @default(now())
+
+  documents Document[]
+}
+
+// ============================================================================
+// SÉCURITÉ / ISM / ISPS
+// Auteur : Capitaine uniquement. Validation du Chef d'armement obligatoire
+// pour tout. Une fois validée, immuable — correction via Contestation.
+// ============================================================================
+
+enum SafetyStatus {
+  BROUILLON
+  SOUMIS
+  VALIDE
+}
+
+model SafetyObservation {
+  id       String @id @default(cuid())
+  tugId    String
+  tug      Tug    @relation(fields: [tugId], references: [id])
+  authorId String
+  author   User   @relation("SafetyAuthor", fields: [authorId], references: [id])
+
+  description String
+  status      SafetyStatus @default(BROUILLON)
+
+  validatedById String?
+  validatedBy   User?     @relation("SafetyValidatedBy", fields: [validatedById], references: [id])
+  validatedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  correctiveActions SafetyCorrectiveAction[]
+  contestations     Contestation[]
+  documents         Document[]
+}
+
+model SafetyCorrectiveAction {
+  id                  String            @id @default(cuid())
+  safetyObservationId String
+  safetyObservation   SafetyObservation @relation(fields: [safetyObservationId], references: [id])
+  description         String
+  responsible         String?
+  status              String            @default("ouverte")
+  dueDate             DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================================
+// DOCUMENTS — entité centrale unique, liens optionnels, vraie gestion de
+// versions. "Photos" du journal machine = documents de type Photo.
+// ============================================================================
+
+enum DocumentStatus {
+  ACTIF
+  ARCHIVE
+}
+
+model Document {
+  id        String         @id @default(cuid())
+  companyId String
+  company   Company        @relation(fields: [companyId], references: [id])
+  typeId    String
+  type      DocumentType   @relation(fields: [typeId], references: [id])
+  name      String
+  status    DocumentStatus @default(ACTIF)
+  expiresAt DateTime?
+
+  // Liens optionnels (nullable) — un document peut être général (aucun lien)
+  tugId                     String?
+  tug                       Tug?                     @relation(fields: [tugId], references: [id])
+  maintenanceInterventionId String?
+  maintenanceIntervention   MaintenanceIntervention? @relation(fields: [maintenanceInterventionId], references: [id])
+  certificateId             String?
+  certificate               Certificate?             @relation(fields: [certificateId], references: [id])
+  exerciseExecutionId       String?
+  exerciseExecution         ExerciseExecution?       @relation(fields: [exerciseExecutionId], references: [id])
+  safetyObservationId       String?
+  safetyObservation         SafetyObservation?       @relation(fields: [safetyObservationId], references: [id])
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions DocumentVersion[]
+}
+
+/// Chaque nouvel upload crée une version horodatée — jamais d'écrasement
+/// silencieux d'un fichier.
+model DocumentVersion {
+  id            String   @id @default(cuid())
+  documentId    String
+  document      Document @relation(fields: [documentId], references: [id])
+  versionNumber Int
+  fileUrl       String
+  addedById     String
+  addedBy       User     @relation(fields: [addedById], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@unique([documentId, versionNumber])
+}
+
+// ============================================================================
+// NOTIFICATIONS — une seule notification par seuil franchi, pas de rappel
+// périodique. Pas de notification de "conflit opérationnel" (jamais calculé).
+// ============================================================================
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model Notification {
+  id        String               @id @default(cuid())
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id])
+  severity  NotificationSeverity
+  title     String
+  detail    String?
+  isRead    Boolean              @default(false)
+  createdAt DateTime             @default(now())
+
+  @@index([userId, isRead])
+}
