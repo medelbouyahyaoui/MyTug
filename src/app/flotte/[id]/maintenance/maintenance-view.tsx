@@ -8,6 +8,7 @@ import {
   toggleMaintenanceTask,
   createEquipmentType,
   type ActionResult,
+  type CreateTypeResult,
   type getMaintenanceOverview,
 } from '@/lib/maintenance/actions';
 import type { MachineLogEntry } from '@prisma/client';
@@ -89,9 +90,10 @@ function PlansSection({
   function addEquipmentType() {
     if (!newEquipmentTypeName.trim()) return;
     startTransition(async () => {
-      const result: ActionResult = await createEquipmentType(newEquipmentTypeName);
+      const result: CreateTypeResult = await createEquipmentType(newEquipmentTypeName);
       if (result.ok) {
         setNewEquipmentTypeName('');
+        setEquipmentTypeId(result.id);
         router.refresh();
       } else {
         setError(result.error);

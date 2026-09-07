@@ -107,14 +107,16 @@ export async function getMaintenanceOverview(tugId: string) {
   };
 }
 
-export async function createEquipmentType(name: string): Promise<ActionResult> {
+export type CreateTypeResult = { ok: true; id: string } | { ok: false; error: string };
+
+export async function createEquipmentType(name: string): Promise<CreateTypeResult> {
   const actor = await requireUser();
   if (actor.role !== 'ADMINISTRATEUR' && actor.role !== 'CHEF_ARMEMENT') {
     return { ok: false, error: "Réservé à l'administrateur et au chef d'armement." };
   }
   if (!name.trim()) return { ok: false, error: 'Nom requis.' };
-  await prisma.maintenanceEquipmentType.create({ data: { companyId: actor.companyId, name } });
-  return { ok: true };
+  const type = await prisma.maintenanceEquipmentType.create({ data: { companyId: actor.companyId, name } });
+  return { ok: true, id: type.id };
 }
 
 export async function createMaintenancePlan(input: {
