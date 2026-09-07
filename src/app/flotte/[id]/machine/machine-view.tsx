@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createMachineLogEntry, createFluidRefill, createEngine, type ActionResult } from '@/lib/machine/actions';
 import type { getMachineOverview } from '@/lib/machine/actions';
 
@@ -342,6 +343,20 @@ function JournalMachine({ tugId, entries, canWrite }: { tugId: string; entries: 
             <p className="mt-0.5 text-xs text-slate-400">
               Par {entry.user.firstName} {entry.user.lastName}
             </p>
+            {entry.isIncident && canWrite && (
+              <p className="mt-1">
+                {entry.linkedMaintenanceInterventionId ? (
+                  <span className="text-xs text-slate-400">Maintenance corrective créée.</span>
+                ) : (
+                  <Link
+                    href={`/flotte/${tugId}/maintenance?fromLog=${entry.id}`}
+                    className="text-xs font-medium text-sky-600 hover:text-sky-700"
+                  >
+                    Créer une maintenance corrective →
+                  </Link>
+                )}
+              </p>
+            )}
           </li>
         ))}
       </ul>
