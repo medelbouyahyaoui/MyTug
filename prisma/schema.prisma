@@ -260,7 +260,23 @@ model User {
 
   configChangeLogs ConfigChangeLog[]
 
+  sessions Session[]
+
   @@index([companyId, role])
+}
+
+/// Sessions stockées en base (pas de JWT) — permet de révoquer un accès
+/// immédiatement si un compte est désactivé, cohérent avec l'exigence de
+/// traçabilité du projet.
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tugId     String? // remorqueur sur lequel la session PIN a été ouverte, le cas échéant
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ============================================================================
