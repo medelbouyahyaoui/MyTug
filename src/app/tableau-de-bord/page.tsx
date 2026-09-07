@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth/session';
 import { prisma } from '@/lib/prisma';
 import { LogoutButton } from './logout-button';
@@ -30,6 +31,15 @@ export default async function TableauDeBordPage() {
         <p className="mt-6 text-sm text-slate-400">
           Le tableau de bord complet arrive au fur et à mesure de la construction des modules.
         </p>
+
+        {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT') && (
+          <Link
+            href="/administration/utilisateurs"
+            className="mt-4 block rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Aller à l&apos;administration
+          </Link>
+        )}
 
         <LogoutButton />
       </div>

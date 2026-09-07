@@ -1,5 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import type { UserRole } from '@prisma/client';
 
@@ -85,5 +86,16 @@ export async function requireUser(): Promise<CurrentUser> {
 export async function requireRole(...roles: UserRole[]): Promise<CurrentUser> {
   const user = await requireUser();
   if (!roles.includes(user.role)) throw new Error('FORBIDDEN');
+  return user;
+}
+
+/**
+ * Variante pour les Server Components de page : redirige proprement plutôt
+ * que de lever une erreur (évite d'afficher un écran d'erreur générique).
+ */
+export async function requireRoleOrRedirect(...roles: UserRole[]): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect('/');
+  if (!roles.includes(user.role)) redirect('/tableau-de-bord');
   return user;
 }

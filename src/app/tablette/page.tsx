@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export default async function TabletteSelectionPage() {
   // Mono-compagnie : une seule compagnie existe dans cette base.
   const company = await prisma.company.findFirst();

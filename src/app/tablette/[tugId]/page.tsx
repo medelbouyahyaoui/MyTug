@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { listKioskUsers } from '@/lib/auth/actions';
+
+export const dynamic = 'force-dynamic';
 import { KioskFlow } from './kiosk-flow';
 
 export default async function TabletteKioskPage({

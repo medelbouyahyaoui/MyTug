@@ -1,0 +1,51 @@
+import Link from 'next/link';
+import { requireRoleOrRedirect } from '@/lib/auth/session';
+
+const ROLE_LABEL: Record<string, string> = {
+  ADMINISTRATEUR: 'Administrateur',
+  CHEF_ARMEMENT: "Chef d'armement",
+};
+
+export default async function AdministrationLayout({ children }: { children: React.ReactNode }) {
+  const user = await requireRoleOrRedirect('ADMINISTRATEUR', 'CHEF_ARMEMENT');
+
+  return (
+    <div className="flex flex-1">
+      <aside className="w-60 shrink-0 border-r border-slate-200 bg-slate-50 p-4">
+        <Link href="/tableau-de-bord" className="mb-6 flex items-center gap-2 px-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-xs font-bold text-white">
+            MT
+          </span>
+          <span className="text-sm font-semibold">MyTug</span>
+        </Link>
+
+        <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          Administration
+        </p>
+        <nav className="flex flex-col gap-0.5">
+          <Link
+            href="/administration/utilisateurs"
+            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+          >
+            Utilisateurs
+          </Link>
+          <Link
+            href="/administration/societe"
+            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+          >
+            Société
+          </Link>
+          <span className="rounded-md px-2 py-1.5 text-sm text-slate-300">Référentiels</span>
+        </nav>
+
+        <div className="mt-6 border-t border-slate-200 px-2 pt-4 text-xs text-slate-400">
+          {user.firstName} {user.lastName}
+          <br />
+          {ROLE_LABEL[user.role] ?? user.role}
+        </div>
+      </aside>
+
+      <div className="flex-1">{children}</div>
+    </div>
+  );
+}
