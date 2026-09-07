@@ -69,6 +69,12 @@ export default async function FicheRemorqueurPage({ params }: { params: Promise<
           >
             Certificats/Exercices →
           </Link>
+          <Link
+            href={`/flotte/${tug.id}/securite`}
+            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            Sécurité →
+          </Link>
           <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
             {STATUS_LABEL[tug.status] ?? tug.status}
           </span>
