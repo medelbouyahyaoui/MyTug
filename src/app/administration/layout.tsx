@@ -43,6 +43,9 @@ export default async function AdministrationLayout({ children }: { children: Rea
           <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Rapports
           </Link>
+          <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+            Historique
+          </Link>
         </nav>
 
         <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">

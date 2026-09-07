@@ -56,6 +56,11 @@ export default async function MissionsLayout({ children }: { children: React.Rea
             </Link>
           )}
           {canManage && (
+            <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+              Historique
+            </Link>
+          )}
+          {canManage && (
             <Link
               href="/administration/utilisateurs"
               className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"

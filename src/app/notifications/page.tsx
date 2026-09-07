@@ -50,6 +50,11 @@ export default async function NotificationsPage() {
             </Link>
           )}
           {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT') && (
+            <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+              Historique
+            </Link>
+          )}
+          {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT') && (
             <Link href="/administration/utilisateurs" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
               Administration
             </Link>
