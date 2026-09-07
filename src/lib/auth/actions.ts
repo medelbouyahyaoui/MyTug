@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { hashSecret, verifySecret } from '@/lib/auth/hash';
 import { createSession, destroySession } from '@/lib/auth/session';
+import { takeService } from '@/lib/service/pickup';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -65,6 +66,7 @@ export async function loginWithPin(userId: string, pin: string, tugId: string): 
   }
 
   await createSession(user.id, tugId);
+  await takeService(user.id, tugId, user.companyId);
   return { ok: true };
 }
 

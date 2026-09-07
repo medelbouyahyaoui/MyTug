@@ -82,12 +82,35 @@ async function main() {
     },
   });
 
+  const chefArmementPassword = 'MyTug2026!';
+  const chefArmement = await prisma.user.create({
+    data: {
+      companyId: company.id,
+      firstName: 'Paul',
+      lastName: 'Vasseur',
+      role: 'CHEF_ARMEMENT',
+      email: 'p.vasseur@remorquage-estuaire.fr',
+      passwordHash: await hashSecret(chefArmementPassword),
+    },
+  });
+
+  // Matelots / graisseur : fiches personne suivies (jours travaillés,
+  // remplacements) sans compte de connexion (rôle MEMBRE_EQUIPAGE).
+  await prisma.user.createMany({
+    data: [
+      { companyId: company.id, firstName: 'Ahmed', lastName: 'Zahiri', role: 'MEMBRE_EQUIPAGE' },
+      { companyId: company.id, firstName: 'Sami', lastName: 'Touil', role: 'MEMBRE_EQUIPAGE' },
+      { companyId: company.id, firstName: 'Khalid', lastName: 'Larbi', role: 'MEMBRE_EQUIPAGE' },
+    ],
+  });
+
   console.log('Amorçage terminé :');
   console.log(`  Compagnie       : ${company.name} (${company.id})`);
   console.log(`  Remorqueur      : ${tug.name}`);
   console.log(`  Admin           : ${admin.email} / mot de passe: ${adminPassword}`);
   console.log(`  Capitaine       : ${capitaine.firstName} ${capitaine.lastName} / PIN: ${capitainePin}`);
   console.log(`  Chef mécanicien : ${chefMeca.firstName} ${chefMeca.lastName} / PIN: ${chefMecaPin}`);
+  console.log(`  Chef d'armement : ${chefArmement.email} / mot de passe: ${chefArmementPassword}`);
 }
 
 main()

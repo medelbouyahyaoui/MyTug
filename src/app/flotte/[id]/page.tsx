@@ -38,9 +38,17 @@ export default async function FicheRemorqueurPage({ params }: { params: Promise<
             {tug.name} <span className="font-normal text-slate-400">· {tug.tugType.name}</span>
           </h1>
         </div>
-        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
-          {STATUS_LABEL[tug.status] ?? tug.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/flotte/${tug.id}/equipage`}
+            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            Équipage →
+          </Link>
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+            {STATUS_LABEL[tug.status] ?? tug.status}
+          </span>
+        </div>
       </div>
 
       <div className="grid gap-6 p-6 lg:grid-cols-2">

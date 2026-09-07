@@ -187,6 +187,11 @@ enum UserRole {
   DISPATCHER
   // NB: le rôle "Mécanicien" du handoff a été supprimé — écart validé par le PO,
   // il n'existe pas de mécanicien à bord dans la réalité de cette compagnie.
+  MEMBRE_EQUIPAGE
+  // Décision technique (pas une règle métier) : les postes Matelot 1/2,
+  // Graisseur, Autres n'ont jamais de compte de connexion dans le handoff —
+  // ce sont de simples noms suivis pour les affectations/rapports. Ce rôle
+  // sert uniquement à leur donner une fiche personne (jamais d'email/PIN).
 }
 
 enum UserStatus {
