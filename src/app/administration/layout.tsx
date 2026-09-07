@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { requireRoleOrRedirect } from '@/lib/auth/session';
+import { getUnreadNotificationCount } from '@/lib/notifications/actions';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMINISTRATEUR: 'Administrateur',
@@ -8,6 +9,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default async function AdministrationLayout({ children }: { children: React.ReactNode }) {
   const user = await requireRoleOrRedirect('ADMINISTRATEUR', 'CHEF_ARMEMENT');
+  const unreadCount = await getUnreadNotificationCount();
 
   return (
     <div className="flex flex-1">
@@ -31,6 +33,12 @@ export default async function AdministrationLayout({ children }: { children: Rea
           </Link>
           <Link href="/documents" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Documents
+          </Link>
+          <Link href="/notifications" className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+            Notifications
+            {unreadCount > 0 && (
+              <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{unreadCount}</span>
+            )}
           </Link>
         </nav>
 

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth/session';
 import { prisma } from '@/lib/prisma';
 import { getHandoverContext } from '@/lib/service/handover';
+import { getUnreadNotificationCount } from '@/lib/notifications/actions';
 import { LogoutButton } from './logout-button';
 import { EndOfService } from './end-of-service';
 
@@ -20,6 +21,7 @@ export default async function TableauDeBordPage() {
 
   const tug = user.tugId ? await prisma.tug.findUnique({ where: { id: user.tugId } }) : null;
   const handoverContext = tug ? await getHandoverContext(tug.id) : null;
+  const unreadCount = await getUnreadNotificationCount();
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
@@ -35,6 +37,10 @@ export default async function TableauDeBordPage() {
             Journal machine / heures moteur / carburant / huile →
           </Link>
         )}
+
+        <Link href="/notifications" className="mt-2 inline-block text-xs text-sky-600 hover:text-sky-700">
+          Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''} →
+        </Link>
 
         <p className="mt-6 text-sm text-slate-400">
           Le tableau de bord complet arrive au fur et à mesure de la construction des modules.

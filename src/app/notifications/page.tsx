@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth/session';
-import { getUnreadNotificationCount } from '@/lib/notifications/actions';
+import { getNotifications } from '@/lib/notifications/actions';
+import { NotificationsView } from './notifications-view';
+
+export const dynamic = 'force-dynamic';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMINISTRATEUR: 'Administrateur',
@@ -11,12 +14,11 @@ const ROLE_LABEL: Record<string, string> = {
   DISPATCHER: 'Dispatcher',
 };
 
-export default async function DocumentsLayout({ children }: { children: React.ReactNode }) {
+export default async function NotificationsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/');
 
-  const canManage = user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT';
-  const unreadCount = await getUnreadNotificationCount();
+  const { notifications } = await getNotifications();
 
   return (
     <div className="flex flex-1">
@@ -28,9 +30,7 @@ export default async function DocumentsLayout({ children }: { children: React.Re
           <span className="text-sm font-semibold">MyTug</span>
         </Link>
 
-        <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-          Navigation
-        </p>
+        <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Navigation</p>
         <nav className="flex flex-col gap-0.5">
           <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Flotte
@@ -38,23 +38,14 @@ export default async function DocumentsLayout({ children }: { children: React.Re
           <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Missions
           </Link>
-          <Link
-            href="/documents"
-            className="rounded-md bg-slate-100 px-2 py-1.5 text-sm font-medium text-slate-900"
-          >
+          <Link href="/documents" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Documents
           </Link>
-          <Link href="/notifications" className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/notifications" className="rounded-md bg-slate-100 px-2 py-1.5 text-sm font-medium text-slate-900">
             Notifications
-            {unreadCount > 0 && (
-              <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{unreadCount}</span>
-            )}
           </Link>
-          {canManage && (
-            <Link
-              href="/administration/utilisateurs"
-              className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-            >
+          {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT') && (
+            <Link href="/administration/utilisateurs" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
               Administration
             </Link>
           )}
@@ -67,7 +58,15 @@ export default async function DocumentsLayout({ children }: { children: React.Re
         </div>
       </aside>
 
-      <div className="flex-1">{children}</div>
+      <div className="flex-1">
+        <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-4">
+          <h1 className="text-lg font-semibold">
+            Notifications <span className="font-normal text-slate-400">· alertes et échéances</span>
+          </h1>
+        </div>
+
+        <NotificationsView notifications={notifications} />
+      </div>
     </div>
   );
 }

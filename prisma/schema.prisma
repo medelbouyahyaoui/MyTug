@@ -946,15 +946,21 @@ enum NotificationSeverity {
   CRITICAL
 }
 
+/// dedupeKey identifie un seuil précis (ex: "FUEL:tugId:20") — garantit une
+/// seule notification par seuil franchi et par destinataire, jamais de rappel
+/// périodique tant qu'un seuil suivant n'est pas atteint.
 model Notification {
-  id        String               @id @default(cuid())
-  userId    String
-  user      User                 @relation(fields: [userId], references: [id])
-  severity  NotificationSeverity
-  title     String
-  detail    String?
-  isRead    Boolean              @default(false)
-  createdAt DateTime             @default(now())
+  id         String               @id @default(cuid())
+  userId     String
+  user       User                 @relation(fields: [userId], references: [id])
+  severity   NotificationSeverity
+  title      String
+  detail     String?
+  linkUrl    String?
+  dedupeKey  String?
+  isRead     Boolean              @default(false)
+  createdAt  DateTime             @default(now())
 
+  @@unique([userId, dedupeKey])
   @@index([userId, isRead])
 }
