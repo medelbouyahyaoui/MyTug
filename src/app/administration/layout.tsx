@@ -40,6 +40,9 @@ export default async function AdministrationLayout({ children }: { children: Rea
               <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{unreadCount}</span>
             )}
           </Link>
+          <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+            Rapports
+          </Link>
         </nav>
 
         <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">

@@ -50,6 +50,11 @@ export default async function DocumentsLayout({ children }: { children: React.Re
               <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{unreadCount}</span>
             )}
           </Link>
+          {(canManage || user.role === 'CHEF_MECANICIEN') && (
+            <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+              Rapports
+            </Link>
+          )}
           {canManage && (
             <Link
               href="/administration/utilisateurs"
