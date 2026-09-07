@@ -40,6 +40,12 @@ export default async function FicheRemorqueurPage({ params }: { params: Promise<
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href={`/flotte/${tug.id}/mission`}
+            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            Mission →
+          </Link>
+          <Link
             href={`/flotte/${tug.id}/equipage`}
             className="text-sm font-medium text-slate-600 hover:text-slate-900"
           >

@@ -1,13 +1,20 @@
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { requireRoleOrRedirect } from '@/lib/auth/session';
+import { getCurrentUser } from '@/lib/auth/session';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMINISTRATEUR: 'Administrateur',
   CHEF_ARMEMENT: "Chef d'armement",
+  CHEF_MECANICIEN: 'Chef mécanicien',
+  CAPITAINE: 'Capitaine',
+  DISPATCHER: 'Dispatcher',
 };
 
-export default async function AdministrationLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireRoleOrRedirect('ADMINISTRATEUR', 'CHEF_ARMEMENT');
+export default async function MissionsLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+  if (!user) redirect('/');
+
+  const canManage = user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT';
 
   return (
     <div className="flex flex-1">
@@ -22,32 +29,24 @@ export default async function AdministrationLayout({ children }: { children: Rea
         <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
           Navigation
         </p>
-        <nav className="mb-5 flex flex-col gap-0.5">
+        <nav className="flex flex-col gap-0.5">
           <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Flotte
           </Link>
-          <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link
+            href="/missions"
+            className="rounded-md bg-slate-100 px-2 py-1.5 text-sm font-medium text-slate-900"
+          >
             Missions
           </Link>
-        </nav>
-
-        <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-          Administration
-        </p>
-        <nav className="flex flex-col gap-0.5">
-          <Link
-            href="/administration/utilisateurs"
-            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-          >
-            Utilisateurs
-          </Link>
-          <Link
-            href="/administration/societe"
-            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-          >
-            Société
-          </Link>
-          <span className="rounded-md px-2 py-1.5 text-sm text-slate-300">Référentiels</span>
+          {canManage && (
+            <Link
+              href="/administration/utilisateurs"
+              className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            >
+              Administration
+            </Link>
+          )}
         </nav>
 
         <div className="mt-6 border-t border-slate-200 px-2 pt-4 text-xs text-slate-400">
