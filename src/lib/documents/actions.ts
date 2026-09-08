@@ -140,7 +140,25 @@ export async function createDocumentType(name: string): Promise<CreateTypeResult
   }
   if (!name.trim()) return { ok: false, error: 'Nom requis.' };
   const type = await prisma.documentType.create({ data: { companyId: actor.companyId, name } });
+  revalidatePath('/administration/societe');
   return { ok: true, id: type.id };
+}
+
+/** Types de documents, actifs et archivés — gestion Société (§45, avec Postes). */
+export async function getAllDocumentTypes() {
+  const actor = await requireUser();
+  if (actor.role !== 'ADMINISTRATEUR' && actor.role !== 'CHEF_ARMEMENT') return [];
+  return prisma.documentType.findMany({ where: { companyId: actor.companyId }, orderBy: { name: 'asc' } });
+}
+
+export async function toggleDocumentTypeArchived(id: string, isArchived: boolean): Promise<ActionResult> {
+  const actor = await requireUser();
+  if (actor.role !== 'ADMINISTRATEUR' && actor.role !== 'CHEF_ARMEMENT') {
+    return { ok: false, error: "Réservé à l'administrateur et au chef d'armement." };
+  }
+  await prisma.documentType.update({ where: { id }, data: { isArchived } });
+  revalidatePath('/administration/societe');
+  return { ok: true };
 }
 
 export async function createDocument(formData: FormData): Promise<ActionResult> {

@@ -64,7 +64,12 @@ export default async function AdministrationLayout({ children }: { children: Rea
           >
             Société
           </Link>
-          <span className="rounded-md px-2 py-1.5 text-sm text-slate-300">Référentiels</span>
+          <Link
+            href="/administration/referentiels"
+            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+          >
+            Référentiels
+          </Link>
         </nav>
 
         <div className="mt-6 border-t border-slate-200 px-2 pt-4 text-xs text-slate-400">
