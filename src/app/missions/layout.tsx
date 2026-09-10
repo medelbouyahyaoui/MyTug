@@ -35,6 +35,11 @@ export default async function MissionsLayout({ children }: { children: React.Rea
           <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Flotte
           </Link>
+          {(canManage || user.role === 'DISPATCHER') && (
+            <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+              Disponibilité
+            </Link>
+          )}
           <Link
             href="/missions"
             className="rounded-md bg-slate-100 px-2 py-1.5 text-sm font-medium text-slate-900"

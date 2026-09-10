@@ -61,6 +61,9 @@ export default async function HistoriquePage({
           <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Flotte
           </Link>
+          <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+            Disponibilité
+          </Link>
           <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Missions
           </Link>

@@ -17,7 +17,7 @@ export function EndOfService({ tugId, context }: { tugId: string; context: Conte
   if (!kind || !hasOpenAssignment) return null;
 
   return (
-    <div className="mt-6 space-y-4 border-t border-slate-200 pt-6 text-left">
+    <div className="space-y-4 text-left">
       {lastDeclaration && <ReceivedDeclaration declaration={lastDeclaration} />}
       <HandoverForm tugId={tugId} kind={kind} engines={engines} />
     </div>

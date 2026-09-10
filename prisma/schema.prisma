@@ -340,6 +340,10 @@ model Tug {
 
   extraSpecs Json? // caractéristiques additionnelles libres — fiche extensible
 
+  /// Annotation libre du tableau de disponibilité — purement informative,
+  /// aucun impact sur le statut ou les règles. Éditable par Chef d'armement/Dispatcher.
+  dispatchNote String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -35,6 +35,11 @@ export default async function NotificationsPage() {
           <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Flotte
           </Link>
+          {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT' || user.role === 'DISPATCHER') && (
+            <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+              Disponibilité
+            </Link>
+          )}
           <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Missions
           </Link>

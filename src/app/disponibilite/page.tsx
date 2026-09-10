@@ -2,27 +2,24 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getUnreadNotificationCount } from '@/lib/notifications/actions';
-import { getAvailableReports, getReportTugs } from '@/lib/reports/actions';
-import { ReportsView } from './reports-view';
+import { getAvailabilityOverview } from '@/lib/availability/actions';
+import { AvailabilityView } from './availability-view';
 
 export const dynamic = 'force-dynamic';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMINISTRATEUR: 'Administrateur',
   CHEF_ARMEMENT: "Chef d'armement",
-  CHEF_MECANICIEN: 'Chef mécanicien',
-  CAPITAINE: 'Capitaine',
   DISPATCHER: 'Dispatcher',
 };
 
-export default async function RapportsPage() {
+export default async function DisponibilitePage() {
   const user = await getCurrentUser();
   if (!user) redirect('/');
+  if (!['ADMINISTRATEUR', 'CHEF_ARMEMENT', 'DISPATCHER'].includes(user.role)) redirect('/tableau-de-bord');
 
-  const [reports, tugs, unreadCount] = await Promise.all([getAvailableReports(), getReportTugs(), getUnreadNotificationCount()]);
-
-  if (reports.length === 0) redirect('/tableau-de-bord');
-
+  const [rows, unreadCount] = await Promise.all([getAvailabilityOverview(), getUnreadNotificationCount()]);
+  const canEditNote = user.role === 'CHEF_ARMEMENT' || user.role === 'DISPATCHER';
   const canManage = user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT';
 
   return (
@@ -40,11 +37,9 @@ export default async function RapportsPage() {
           <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Flotte
           </Link>
-          {(canManage || user.role === 'DISPATCHER') && (
-            <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-              Disponibilité
-            </Link>
-          )}
+          <Link href="/disponibilite" className="rounded-md bg-slate-100 px-2 py-1.5 text-sm font-medium text-slate-900">
+            Disponibilité
+          </Link>
           <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
             Missions
           </Link>
@@ -57,9 +52,11 @@ export default async function RapportsPage() {
               <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{unreadCount}</span>
             )}
           </Link>
-          <Link href="/rapports" className="rounded-md bg-slate-100 px-2 py-1.5 text-sm font-medium text-slate-900">
-            Rapports
-          </Link>
+          {canManage && (
+            <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+              Rapports
+            </Link>
+          )}
           {canManage && (
             <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
               Historique
@@ -80,13 +77,13 @@ export default async function RapportsPage() {
       </aside>
 
       <div className="flex-1">
-        <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-4 print:hidden">
+        <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-4">
           <h1 className="text-lg font-semibold">
-            Rapports <span className="font-normal text-slate-400">· génération à la demande</span>
+            Disponibilité <span className="font-normal text-slate-400">· vue agrégée, aucun conflit calculé automatiquement</span>
           </h1>
         </div>
 
-        <ReportsView reports={reports} tugs={tugs} />
+        <AvailabilityView rows={rows} canEditNote={canEditNote} />
       </div>
     </div>
   );
