@@ -56,7 +56,7 @@ export async function getChefMecanicienDashboard(tugId: string) {
   const actor = await requireUser();
   const notifications = await prisma.notification.findMany({ where: { userId: actor.id, isRead: false }, orderBy: { createdAt: 'desc' }, take: 5 });
 
-  return { machine, upcoming, overdue, correctiveInterventions, notifications };
+  return { machine, plans: maintenance.plans, upcoming, overdue, correctiveInterventions, notifications };
 }
 
 export async function getChefArmementDashboard() {

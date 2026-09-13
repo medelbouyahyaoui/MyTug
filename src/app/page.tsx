@@ -1,7 +1,7 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Logo } from '@/components/logo';
-import { ZelligePattern } from '@/components/zellige-pattern';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +9,9 @@ export default async function HomePage() {
   const company = await prisma.company.findFirst();
 
   return (
-    <main className="relative flex flex-1 flex-col items-center justify-center gap-10 overflow-hidden bg-slate-900 p-8">
-      <ZelligePattern className="absolute inset-0 h-full w-full text-amber-300" />
+    <main className="relative flex flex-1 flex-col items-center justify-center gap-10 overflow-hidden p-8">
+      <Image src="/images/hero-port.png" alt="" fill priority className="object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-slate-900/90" />
 
       <div className="relative flex flex-col items-center text-center">
         <Logo className="h-16 w-16 text-amber-400" />

@@ -33,7 +33,9 @@ export async function getMachineOverview(tugId: string) {
   const currentFuelLevel = fuelEvents.find((e) => e.eventType === 'NIVEAU_DECLARE')?.quantity ?? null;
   const currentOilLevel = oilEvents.find((e) => e.eventType === 'NIVEAU_DECLARE')?.quantity ?? null;
   const fuelPct = currentFuelLevel != null && tug.fuelCapacityT ? (currentFuelLevel / tug.fuelCapacityT) * 100 : null;
+  const oilPct = currentOilLevel != null && tug.oilCapacityL ? (currentOilLevel / tug.oilCapacityL) * 100 : null;
   const fuelAlert = fuelPct != null && fuelPct <= company.fuelAlertThresholdPct;
+  const latestState = logEntries[0]?.state ?? null;
 
   return {
     tug,
@@ -44,7 +46,9 @@ export async function getMachineOverview(tugId: string) {
     currentFuelLevel,
     currentOilLevel,
     fuelPct,
+    oilPct,
     fuelAlert,
+    latestState,
     fuelAlertThresholdPct: company.fuelAlertThresholdPct,
     canWrite: actor.role === 'CHEF_MECANICIEN',
     canManageEngines: actor.role === 'ADMINISTRATEUR' || actor.role === 'CHEF_ARMEMENT',
