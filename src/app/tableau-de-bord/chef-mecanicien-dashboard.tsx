@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { getChefMecanicienDashboard } from '@/lib/dashboard/actions';
 import { RadialGauge } from '@/components/radial-gauge';
 import { ZelligePattern } from '@/components/zellige-pattern';
+import { DarkCard } from '@/components/dark-card';
 
 type Data = Awaited<ReturnType<typeof getChefMecanicienDashboard>>;
 
@@ -154,15 +155,6 @@ export function ChefMecanicienDashboard({ data }: { data: Data }) {
           </DarkCard>
         </div>
       </div>
-    </div>
-  );
-}
-
-function DarkCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-xl border border-white/10 bg-white/5 p-4 text-left ${className ?? ''}`}>
-      <p className="mb-2 text-sm font-semibold text-white">{title}</p>
-      {children}
     </div>
   );
 }
