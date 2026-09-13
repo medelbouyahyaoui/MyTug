@@ -5,11 +5,82 @@
   --foreground: #171717;
 }
 
+/*
+ * Identité visuelle "Zellige × Marine" — remplace la palette Tailwind par
+ * défaut aux mêmes noms de tokens (slate/sky/emerald/amber/red) pour que
+ * toutes les classes déjà utilisées dans l'app (bg-slate-900, text-sky-600,
+ * bg-emerald-100...) héritent automatiquement du nouveau thème.
+ *
+ * slate  -> neutre plâtre chaud -> bleu zellige profond (fond/texte/bordures)
+ * sky    -> bleu zellige vif (liens, accents, boutons secondaires)
+ * emerald-> vert émeraude (succès)
+ * amber  -> laiton (avertissement)
+ * red    -> terre cuite (danger)
+ */
+@theme {
+  --font-sans: var(--font-ibm-plex-sans);
+  --font-serif: var(--font-marcellus);
+
+  --color-slate-50: #f8f5ef;
+  --color-slate-100: #f0e9db;
+  --color-slate-200: #e1d3b8;
+  --color-slate-300: #c7b394;
+  --color-slate-400: #a3927e;
+  --color-slate-500: #7d715f;
+  --color-slate-600: #564d5c;
+  --color-slate-700: #3a3550;
+  --color-slate-800: #232244;
+  --color-slate-900: #13203b;
+  --color-slate-950: #0a1526;
+
+  --color-sky-50: #eaf3fb;
+  --color-sky-100: #d3e7f7;
+  --color-sky-200: #a8cff0;
+  --color-sky-300: #78b3e6;
+  --color-sky-400: #4b96d9;
+  --color-sky-500: #2c7bc4;
+  --color-sky-600: #1d63a3;
+  --color-sky-700: #164e82;
+  --color-sky-800: #123f68;
+  --color-sky-900: #0f3354;
+
+  --color-emerald-50: #ecf9f2;
+  --color-emerald-100: #d7f0e3;
+  --color-emerald-200: #aee0c8;
+  --color-emerald-300: #7bcaa8;
+  --color-emerald-400: #45ab82;
+  --color-emerald-500: #278f68;
+  --color-emerald-600: #1f7a52;
+  --color-emerald-700: #1a6244;
+  --color-emerald-800: #164e38;
+  --color-emerald-900: #12402e;
+
+  --color-amber-50: #fbf3e1;
+  --color-amber-100: #f7ecd1;
+  --color-amber-200: #edd7a3;
+  --color-amber-300: #e0bd70;
+  --color-amber-400: #cd9f43;
+  --color-amber-500: #b3852c;
+  --color-amber-600: #92661a;
+  --color-amber-700: #785316;
+  --color-amber-800: #5f4212;
+  --color-amber-900: #4d360f;
+
+  --color-red-50: #fbeee9;
+  --color-red-100: #f8dcd3;
+  --color-red-200: #eeb8a5;
+  --color-red-300: #e08f70;
+  --color-red-400: #cf6644;
+  --color-red-500: #c0472b;
+  --color-red-600: #a83d24;
+  --color-red-700: #96351f;
+  --color-red-800: #782a19;
+  --color-red-900: #602216;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +93,9 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  letter-spacing: 0.01em;
 }

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getUnreadNotificationCount } from '@/lib/notifications/actions';
 import { getHistoryEvents, type HistoryEventType } from '@/lib/history/actions';
@@ -50,9 +51,7 @@ export default async function HistoriquePage({
     <div className="flex flex-1">
       <aside className="w-60 shrink-0 border-r border-slate-200 bg-slate-50 p-4">
         <Link href="/tableau-de-bord" className="mb-6 flex items-center gap-2 px-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-xs font-bold text-white">
-            MT
-          </span>
+          <Logo className="h-7 w-7 text-slate-900" />
           <span className="text-sm font-semibold">MyTug</span>
         </Link>
 
