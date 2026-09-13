@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { loginWithPin } from '@/lib/auth/actions';
+import { ZelligePattern } from '@/components/zellige-pattern';
 import type { UserRole } from '@prisma/client';
 
 type KioskUser = {
@@ -59,11 +60,13 @@ export function KioskFlow({ tug, users }: { tug: { id: string; name: string }; u
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center bg-slate-950 px-6 py-10 text-slate-50">
-      <div className="flex w-full max-w-2xl items-center justify-between">
+    <main className="relative flex flex-1 flex-col items-center overflow-hidden bg-slate-950 px-6 py-10 text-slate-50">
+      <ZelligePattern className="absolute inset-0 h-full w-full text-amber-300" />
+
+      <div className="relative flex w-full max-w-2xl items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-slate-400">MyTug · Remorqueur</p>
-          <h1 className="text-xl font-semibold">{tug.name}</h1>
+          <h1 className="font-serif text-xl">{tug.name}</h1>
         </div>
         <Link href="/tablette" className="text-xs text-slate-400 hover:text-slate-200">
           ← Changer de remorqueur
@@ -71,7 +74,7 @@ export function KioskFlow({ tug, users }: { tug: { id: string; name: string }; u
       </div>
 
       {!selected && (
-        <div className="mt-10 grid w-full max-w-2xl grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="relative mt-10 grid w-full max-w-2xl grid-cols-2 gap-4 sm:grid-cols-3">
           {users.map((u) => (
             <button
               key={u.id}
@@ -94,7 +97,7 @@ export function KioskFlow({ tug, users }: { tug: { id: string; name: string }; u
       )}
 
       {selected && (
-        <div className="mt-10 flex w-full max-w-xs flex-col items-center">
+        <div className="relative mt-10 flex w-full max-w-xs flex-col items-center">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-600 text-lg font-semibold">
             {initials(selected)}
           </span>

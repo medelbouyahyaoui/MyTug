@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+import { ZelligePattern } from '@/components/zellige-pattern';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,13 +16,15 @@ export default async function TabletteSelectionPage() {
     : [];
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 bg-slate-950 p-8 text-slate-50">
-      <div className="text-center">
+    <main className="relative flex flex-1 flex-col items-center justify-center gap-8 overflow-hidden bg-slate-950 p-8 text-slate-50">
+      <ZelligePattern className="absolute inset-0 h-full w-full text-amber-300" />
+
+      <div className="relative text-center">
         <p className="text-xs uppercase tracking-widest text-slate-400">MyTug</p>
-        <h1 className="mt-1 text-xl font-semibold">Sélection du remorqueur</h1>
+        <h1 className="mt-1 font-serif text-xl">Sélection du remorqueur</h1>
       </div>
 
-      <div className="grid w-full max-w-2xl grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="relative grid w-full max-w-2xl grid-cols-2 gap-4 sm:grid-cols-3">
         {tugs.map((tug) => (
           <Link
             key={tug.id}

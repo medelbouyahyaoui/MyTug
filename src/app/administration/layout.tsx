@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { requireRoleOrRedirect } from '@/lib/auth/session';
 import { getUnreadNotificationCount } from '@/lib/notifications/actions';
+import { IconAdmin, IconAvailability, IconDocuments, IconFleet, IconHistory, IconList, IconMissions, IconNotifications, IconReports, IconUsers } from '@/components/nav-icons';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMINISTRATEUR: 'Administrateur',
@@ -24,28 +25,34 @@ export default async function AdministrationLayout({ children }: { children: Rea
           Navigation
         </p>
         <nav className="mb-5 flex flex-col gap-0.5">
-          <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconFleet className="h-4 w-4 shrink-0" />
             Flotte
           </Link>
-          <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconAvailability className="h-4 w-4 shrink-0" />
             Disponibilité
           </Link>
-          <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconMissions className="h-4 w-4 shrink-0" />
             Missions
           </Link>
-          <Link href="/documents" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/documents" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconDocuments className="h-4 w-4 shrink-0" />
             Documents
           </Link>
           <Link href="/notifications" className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-            Notifications
+            <span className="flex items-center gap-2"><IconNotifications className="h-4 w-4 shrink-0" />Notifications</span>
             {unreadCount > 0 && (
               <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{unreadCount}</span>
             )}
           </Link>
-          <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconReports className="h-4 w-4 shrink-0" />
             Rapports
           </Link>
-          <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconHistory className="h-4 w-4 shrink-0" />
             Historique
           </Link>
         </nav>
@@ -56,20 +63,23 @@ export default async function AdministrationLayout({ children }: { children: Rea
         <nav className="flex flex-col gap-0.5">
           <Link
             href="/administration/utilisateurs"
-            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2"
           >
+            <IconUsers className="h-4 w-4 shrink-0" />
             Utilisateurs
           </Link>
           <Link
             href="/administration/societe"
-            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2"
           >
+            <IconAdmin className="h-4 w-4 shrink-0" />
             Société
           </Link>
           <Link
             href="/administration/referentiels"
-            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2"
           >
+            <IconList className="h-4 w-4 shrink-0" />
             Référentiels
           </Link>
         </nav>

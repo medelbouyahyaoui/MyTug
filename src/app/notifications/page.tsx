@@ -4,6 +4,7 @@ import { Logo } from '@/components/logo';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getNotifications } from '@/lib/notifications/actions';
 import { NotificationsView } from './notifications-view';
+import { IconAdmin, IconAvailability, IconDocuments, IconFleet, IconHistory, IconMissions, IconNotifications, IconReports } from '@/components/nav-icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,37 +32,44 @@ export default async function NotificationsPage() {
 
         <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Navigation</p>
         <nav className="flex flex-col gap-0.5">
-          <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/flotte" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconFleet className="h-4 w-4 shrink-0" />
             Flotte
           </Link>
           {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT' || user.role === 'DISPATCHER') && (
-            <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-              Disponibilité
-            </Link>
+            <Link href="/disponibilite" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconAvailability className="h-4 w-4 shrink-0" />
+            Disponibilité
+          </Link>
           )}
-          <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/missions" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconMissions className="h-4 w-4 shrink-0" />
             Missions
           </Link>
-          <Link href="/documents" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+          <Link href="/documents" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconDocuments className="h-4 w-4 shrink-0" />
             Documents
           </Link>
           <Link href="/notifications" className="rounded-md bg-slate-100 px-2 py-1.5 text-sm font-medium text-slate-900">
-            Notifications
+            <span className="flex items-center gap-2"><IconNotifications className="h-4 w-4 shrink-0" />Notifications</span>
           </Link>
           {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT' || user.role === 'CHEF_MECANICIEN') && (
-            <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-              Rapports
-            </Link>
+            <Link href="/rapports" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconReports className="h-4 w-4 shrink-0" />
+            Rapports
+          </Link>
           )}
           {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT') && (
-            <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-              Historique
-            </Link>
+            <Link href="/historique" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconHistory className="h-4 w-4 shrink-0" />
+            Historique
+          </Link>
           )}
           {(user.role === 'ADMINISTRATEUR' || user.role === 'CHEF_ARMEMENT') && (
-            <Link href="/administration/utilisateurs" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-              Administration
-            </Link>
+            <Link href="/administration/utilisateurs" className="rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+            <IconAdmin className="h-4 w-4 shrink-0" />
+            Administration
+          </Link>
           )}
         </nav>
 
